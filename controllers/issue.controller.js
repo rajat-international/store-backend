@@ -6,87 +6,107 @@ const StockHistory = require("../models/StockHistory");
 // Issue Fabric
 // ======================================
 
+
 const issueFabric = async (req, res) => {
-    try {
-        const {
-            fabric,
-            challanNo,
-            issuedTo,
-            quantity,
-            description
-        } = req.body;
+  try {
+    const {
+      fabric,
+      challanNo,
+      issuedTo,
+      quantity,
+      description,
+    } = req.body;
 
-        const fabricData = await Fabric.findById(fabric);
-
-        if (!fabricData) {
-            return res.status(404).json({
-                success: false,
-                message: "Fabric not found",
-            });
-        }
-
-        if (quantity <= 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Quantity must be greater than 0",
-            });
-        }
-
-        if (fabricData.quantity < quantity) {
-            return res.status(400).json({
-                success: false,
-                message: "Insufficient stock",
-            });
-        }
-
-        // Reduce Stock
-        const oldStock = fabricData.quantity;
-
-        fabricData.quantity -= quantity;
-
-        await fabricData.save();
-
-
-        // Create Issue
-        const issue = await Issue.create({
-            fabric: fabricData._id,
-            fabricCode: fabricData.fabricCode,
-            construction: fabricData.construction,
-            color: fabricData.color,
-            issuedTo,
-            challanNo,
-            issuedQuantity: quantity,
-            description,
-        });
-        await StockHistory.create({
-            fabric: fabricData._id,
-            fabricCode: fabricData.fabricCode,
-            type: "ISSUE",
-            quantity,
-            challanNo,
-            oldStock,
-            newStock: fabricData.quantity,
-            merchant: issuedTo,
-            description,
-        });
-
-        // Step 7:
-        // Yahan StockHistory create karenge
-
-        res.status(201).json({
-            success: true,
-            message: "Fabric Issued Successfully",
-            data: issue,
-        });
-
-    } catch (error) {
-
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-
+    // Validation
+    if (!fabric) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select fabric",
+      });
     }
+
+    if (!challanNo) {
+      return res.status(400).json({
+        success: false,
+        message: "Challan No is required",
+      });
+    }
+
+    const fabricData = await Fabric.findById(fabric);
+
+    if (!fabricData) {
+      return res.status(404).json({
+        success: false,
+        message: "Fabric not found",
+      });
+    }
+
+    if (quantity <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Quantity must be greater than 0",
+      });
+    }
+
+    if (fabricData.quantity < quantity) {
+      return res.status(400).json({
+        success: false,
+        message: "Insufficient Stock",
+      });
+    }
+
+    const oldStock = fabricData.quantity;
+
+    // ======================================
+    // Create Issue First
+    // ======================================
+
+    const issue = await Issue.create({
+      fabric: fabricData._id,
+      challanNo,
+      fabricCode: fabricData.fabricCode,
+      construction: fabricData.construction,
+      color: fabricData.color,
+      issuedTo,
+      issuedQuantity: quantity,
+      description,
+    });
+
+    // ======================================
+    // Update Stock
+    // ======================================
+
+    fabricData.quantity -= quantity;
+
+    await fabricData.save();
+
+    // ======================================
+    // Save History
+    // ======================================
+
+    await StockHistory.create({
+      fabric: fabricData._id,
+      fabricCode: fabricData.fabricCode,
+      challanNo,
+      type: "ISSUE",
+      quantity,
+      oldStock,
+      newStock: fabricData.quantity,
+      merchant: issuedTo,
+      description,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Fabric Issued Successfully",
+      data: issue,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 // ======================================

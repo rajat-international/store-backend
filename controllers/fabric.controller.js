@@ -201,9 +201,28 @@ const updateFabric = async (req, res) => {
       });
     }
 
+    // Save old stock BEFORE updating
+    const oldStock = fabric.quantity;
+
+    // Update data
     Object.assign(fabric, req.body);
 
     await fabric.save();
+
+    const newStock = fabric.quantity;
+
+    if (oldStock !== newStock) {
+      await StockHistory.create({
+        fabric: fabric._id,
+        fabricCode: fabric.fabricCode,
+        type: "UPDATE",
+        quantity: Math.abs(newStock - oldStock),
+        oldStock,
+        newStock,
+        merchant: "",
+        description: "Stock Updated",
+      });
+    }
 
     res.status(200).json({
       success: true,
