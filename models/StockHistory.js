@@ -39,7 +39,6 @@ const stockHistorySchema = new mongoose.Schema({
   },
   challanNo: {
     type: String,
-    default: "",
     trim: true,
   },
   description: {

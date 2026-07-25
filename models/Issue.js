@@ -27,6 +27,7 @@ const issueSchema = new mongoose.Schema({
   challanNo: {
     type: String,
     required: true,
+    unique: true,
     trim: true,
   },
 
