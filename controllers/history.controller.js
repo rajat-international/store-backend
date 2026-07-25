@@ -18,12 +18,28 @@ const getAllHistory = async (req, res) => {
     const query = {};
 
     // Search by Fabric Code
-    if (search) {
-      query.fabricCode = {
+ if (search) {
+  query.$or = [
+    {
+      fabricCode: {
         $regex: search,
         $options: "i",
-      };
-    }
+      },
+    },
+    {
+      merchant: {
+        $regex: search,
+        $options: "i",
+      },
+    },
+    {
+      challanNo: {
+        $regex: search,
+        $options: "i",
+      },
+    },
+  ];
+}
 
     // Filter by Fabric
     if (fabricId) {

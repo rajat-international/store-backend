@@ -10,6 +10,7 @@ const issueFabric = async (req, res) => {
     try {
         const {
             fabric,
+            challanNo,
             issuedTo,
             quantity,
             description
@@ -53,6 +54,7 @@ const issueFabric = async (req, res) => {
             construction: fabricData.construction,
             color: fabricData.color,
             issuedTo,
+            challanNo,
             issuedQuantity: quantity,
             description,
         });
@@ -61,6 +63,7 @@ const issueFabric = async (req, res) => {
             fabricCode: fabricData.fabricCode,
             type: "ISSUE",
             quantity,
+            challanNo,
             oldStock,
             newStock: fabricData.quantity,
             merchant: issuedTo,
@@ -170,10 +173,19 @@ const getAllIssues = async (req, res) => {
         const query = {};
 
         if (search) {
-            query.issuedTo = {
-                $regex: search,
-                $options: "i",
-            };
+            query.$or = [{
+                    issuedTo: {
+                        $regex: search,
+                        $options: "i",
+                    },
+                },
+                {
+                    challanNo: {
+                        $regex: search,
+                        $options: "i",
+                    },
+                },
+            ];
         }
 
         if (fabricId) {
