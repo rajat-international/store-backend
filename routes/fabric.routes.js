@@ -7,11 +7,14 @@ const {
   getFabricById,
   updateFabric,
   deleteFabric,
+  exportFabrics,
 } = require("../controllers/fabric.controller");
 
 router.post("/", addFabric);
 
 router.get("/", getAllFabrics);
+
+router.get("/export", exportFabrics);
 
 router.get("/:id", getFabricById);
 

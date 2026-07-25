@@ -1,5 +1,6 @@
 const Fabric = require("../models/Fabric");
 const StockHistory = require("../models/StockHistory");
+const ExcelJS = require("exceljs");
 
 // ==========================
 // Add Fabric
@@ -245,10 +246,227 @@ const deleteFabric = async (req, res) => {
   }
 };
 
+// ==========================
+// Export Fabrics Excel
+// ==========================
+
+const exportFabrics = async (req, res) => {
+  try {
+    const fabrics = await Fabric.find()
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const workbook = new ExcelJS.Workbook();
+
+    const worksheet = workbook.addWorksheet("Fabric Inventory");
+
+    // Company Name
+
+    worksheet.mergeCells("A1:K1");
+
+    worksheet.getCell("A1").value =
+      "RAJAT INTERNATIONAL";
+
+    worksheet.getCell("A1").font = {
+      bold: true,
+      size: 18,
+    };
+
+    worksheet.getCell("A1").alignment = {
+      horizontal: "center",
+    };
+
+    // Report Title
+
+    worksheet.mergeCells("A2:K2");
+
+    worksheet.getCell("A2").value =
+      "FABRIC INVENTORY REPORT";
+
+    worksheet.getCell("A2").font = {
+      bold: true,
+      size: 14,
+    };
+
+    worksheet.getCell("A2").alignment = {
+      horizontal: "center",
+    };
+
+    worksheet.getCell("A3").value =
+      "Generated : " +
+      new Date().toLocaleString("en-IN");
+
+    worksheet.addRow([]);
+
+    // Header
+
+    const header = worksheet.addRow([
+      "Fabric Code",
+      "Construction",
+      "Composition",
+      "GSM",
+      "Color",
+      "Supplier",
+      "Stock",
+      "Unit",
+      "Rack No",
+      "Price",
+      "Low Stock",
+    ]);
+
+    header.eachCell((cell) => {
+      cell.font = {
+        bold: true,
+        color: {
+          argb: "FFFFFFFF",
+        },
+      };
+
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: {
+          argb: "1F4E78",
+        },
+      };
+
+      cell.alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+
+      cell.border = {
+        top: {
+          style: "thin",
+        },
+        left: {
+          style: "thin",
+        },
+        bottom: {
+          style: "thin",
+        },
+        right: {
+          style: "thin",
+        },
+      };
+    });
+
+    // Data
+
+    fabrics.forEach((fabric) => {
+      worksheet.addRow([
+        fabric.fabricCode,
+
+        fabric.construction,
+
+        fabric.composition
+          ?.map(
+            (item) =>
+              `${item.percentage}% ${item.material}`
+          )
+          .join(", "),
+
+        fabric.gsm,
+
+        fabric.color,
+
+        fabric.supplier,
+
+        fabric.quantity,
+
+        fabric.unit,
+
+        fabric.rackNumber,
+
+        fabric.price,
+
+        fabric.lowStockLimit,
+      ]);
+    });
+
+    // Border
+
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber <= 4) return;
+
+      row.eachCell((cell) => {
+        cell.border = {
+          top: {
+            style: "thin",
+          },
+          left: {
+            style: "thin",
+          },
+          bottom: {
+            style: "thin",
+          },
+          right: {
+            style: "thin",
+          },
+        };
+      });
+    });
+
+    // Auto Width
+
+    worksheet.columns.forEach((column) => {
+      let maxLength = 15;
+
+      column.eachCell((cell) => {
+        const len = cell.value
+          ? cell.value.toString().length
+          : 10;
+
+        if (len > maxLength) {
+          maxLength = len;
+        }
+      });
+
+      column.width = maxLength + 3;
+    });
+
+    // Freeze Header
+
+    worksheet.views = [
+      {
+        state: "frozen",
+        ySplit: 5,
+      },
+    ];
+
+    // Auto Filter
+
+    worksheet.autoFilter = {
+      from: "A5",
+      to: "K5",
+    };
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="FabricInventory.xlsx"'
+    );
+
+    await workbook.xlsx.write(res);
+
+    res.end();
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   addFabric,
   getAllFabrics,
   getFabricById,
   updateFabric,
   deleteFabric,
+    exportFabrics,
 };
