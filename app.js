@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
 const historyRoutes = require("./routes/history.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const authRoutes = require("./routes/auth.routes");
@@ -10,13 +11,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://localhost:3000",
-
-      "http://store-frontend-phi-gules.vercel.app",
-      "https://store-frontend-phi-gules.vercel.app",
-    ],
+    origin: true,
     credentials: true,
   })
 );
