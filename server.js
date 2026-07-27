@@ -7,10 +7,20 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 const app = require("./app");
 const connectDB = require("./config/db");
 
-connectDB();
-
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server Running on Port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server Running on Port ${PORT}`);
+    });
+  } catch (error) {
+    console.log("❌ Failed to start server");
+    console.log(error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
