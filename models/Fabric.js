@@ -51,6 +51,11 @@ const fabricSchema = new mongoose.Schema({
     required: true,
     min: 0,
   },
+category: {
+  type: String,
+  trim: true,
+  default: "",
+},
 
   price: {
     type: Number,

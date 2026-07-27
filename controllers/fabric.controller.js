@@ -9,6 +9,7 @@ const addFabric = async (req, res) => {
   try {
     const {
       fabricCode,
+      category,
       construction,
       composition,
       gsm,
@@ -34,6 +35,7 @@ const addFabric = async (req, res) => {
       fabricCode,
       construction,
       composition,
+      category,
       gsm,
       color,
       supplier,
@@ -80,11 +82,13 @@ const getAllFabrics = async (req, res) => {
     const search = req.query.search?.trim() || "";
     const color = req.query.color || "";
     const supplier = req.query.supplier || "";
+    const category = req.query.category || "";
 
     const query = {};
 
     if (search) {
       query.$or = [
+        
         {
           fabricCode: {
             $regex: search,
@@ -123,10 +127,16 @@ const getAllFabrics = async (req, res) => {
         },
       ];
     }
+    if (category) {
+  query.category = category;
+}
 
     if (color) {
       query.color = color;
     }
+    if (category) {
+  query.category = category;
+}
 
     if (supplier) {
       query.supplier = supplier;
@@ -136,7 +146,7 @@ const getAllFabrics = async (req, res) => {
 
     const fabrics = await Fabric.find(query)
       .select(
-        "fabricCode construction composition gsm color supplier quantity price unit rackNumber lowStockLimit createdAt updatedAt"
+        "fabricCode category construction composition gsm color supplier quantity price unit rackNumber lowStockLimit createdAt updatedAt"
       )
       .sort({
         createdAt: -1,
