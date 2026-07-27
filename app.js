@@ -17,6 +17,12 @@ app.get("/", (req, res) => {
     message: "Fabric Inventory API Running",
   });
 });
+
+app.get("/api/db-test", (req, res) => {
+  res.json({
+    state: mongoose.connection.readyState,
+  });
+});
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/history", historyRoutes);
 app.use("/api/auth", authRoutes);
