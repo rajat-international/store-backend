@@ -1,5 +1,6 @@
 const Fabric = require("../models/Fabric");
 const StockHistory = require("../models/StockHistory");
+const { deleteImage } = require("../utils/cloudinary");
 const ExcelJS = require("exceljs");
 
 // ==========================
@@ -10,6 +11,7 @@ const addFabric = async (req, res) => {
     const {
       fabricCode,
       category,
+      width,
       construction,
       composition,
       gsm,
@@ -37,6 +39,7 @@ const addFabric = async (req, res) => {
       composition,
       category,
       gsm,
+      width,
       color,
       supplier,
       quantity,
@@ -78,7 +81,6 @@ const getAllFabrics = async (req, res) => {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-
     const search = req.query.search?.trim() || "";
     const color = req.query.color || "";
     const supplier = req.query.supplier || "";
@@ -146,7 +148,7 @@ const getAllFabrics = async (req, res) => {
 
     const fabrics = await Fabric.find(query)
       .select(
-        "fabricCode category construction composition gsm color supplier quantity price unit rackNumber lowStockLimit createdAt updatedAt"
+        "fabricCode category width construction composition gsm color supplier quantity price unit rackNumber lowStockLimit createdAt updatedAt"
       )
       .sort({
         createdAt: -1,
@@ -211,32 +213,21 @@ const updateFabric = async (req, res) => {
       });
     }
 
-    // Save old stock BEFORE updating
-    const oldStock = fabric.quantity;
+    // Delete old image
+    if (req.file && fabric.image) {
+      await deleteImage(fabric.image);
+    }
 
-    // Update data
     Object.assign(fabric, req.body);
+
+    if (req.file) {
+      fabric.image = req.file.path;
+    }
 
     await fabric.save();
 
-    const newStock = fabric.quantity;
-
-    if (oldStock !== newStock) {
-      await StockHistory.create({
-        fabric: fabric._id,
-        fabricCode: fabric.fabricCode,
-        type: "UPDATE",
-        quantity: Math.abs(newStock - oldStock),
-        oldStock,
-        newStock,
-        merchant: "",
-        description: "Stock Updated",
-      });
-    }
-
-    res.status(200).json({
+    res.json({
       success: true,
-      message: "Fabric Updated Successfully",
       data: fabric,
     });
   } catch (error) {
@@ -261,10 +252,14 @@ const deleteFabric = async (req, res) => {
       });
     }
 
+    if (fabric.image) {
+      await deleteImage(fabric.image);
+    }
+
     await fabric.deleteOne();
 
-    res.status(200).json({
-      success: false,
+    res.json({
+      success: true,
       message: "Fabric Deleted Successfully",
     });
   } catch (error) {
@@ -274,7 +269,6 @@ const deleteFabric = async (req, res) => {
     });
   }
 };
-
 // ==========================
 // Export Fabrics Excel
 // ==========================
@@ -333,12 +327,14 @@ const exportFabrics = async (req, res) => {
       "Fabric Code",
       "Construction",
       "Composition",
+      "category",
       "GSM",
       "Color",
       "Supplier",
       "Stock",
-      "Unit",
+      "width",
       "Rack No",
+      "Unit",
       "Price",
       "Low Stock",
     ]);
@@ -396,19 +392,14 @@ const exportFabrics = async (req, res) => {
           .join(", "),
 
         fabric.gsm,
-
         fabric.color,
-
         fabric.supplier,
-
         fabric.quantity,
-
         fabric.unit,
-
+        fabric.width,
         fabric.rackNumber,
-
         fabric.price,
-
+        fabric.category,
         fabric.lowStockLimit,
       ]);
     });

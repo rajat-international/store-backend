@@ -7,6 +7,10 @@ const fabricSchema = new mongoose.Schema({
     unique: true,
     trim: true,
   },
+  image: {
+  type: String,
+  default: "",
+},
 
   construction: {
     type: String,
@@ -62,6 +66,11 @@ category: {
     required: true,
     min: 0,
   },
+width: {
+  type: String,
+  default: "",
+  trim: true,
+},
 
   unit: {
     type: String,

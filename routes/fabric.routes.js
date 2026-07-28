@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const upload = require("../middleware/upload");
 
 const {
   addFabric,
@@ -10,7 +11,7 @@ const {
   exportFabrics,
 } = require("../controllers/fabric.controller");
 
-router.post("/", addFabric);
+router.post("/",upload.single("image"), addFabric);
 
 router.get("/", getAllFabrics);
 
@@ -18,7 +19,7 @@ router.get("/export", exportFabrics);
 
 router.get("/:id", getFabricById);
 
-router.put("/:id", updateFabric);
+router.put("/:id", upload.single("image"), updateFabric);
 
 router.delete("/:id", deleteFabric);
 
