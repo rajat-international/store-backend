@@ -149,7 +149,7 @@ const getAllFabrics = async (req, res) => {
 
     const fabrics = await Fabric.find(query)
       .select(
-        "fabricCode category width construction composition gsm color supplier quantity price unit rackNumber lowStockLimit createdAt updatedAt"
+        "fabricCode image category width construction composition gsm color supplier quantity price unit rackNumber lowStockLimit createdAt updatedAt"
       )
       .sort({
         createdAt: -1,
