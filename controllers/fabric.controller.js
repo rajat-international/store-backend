@@ -47,6 +47,7 @@ const addFabric = async (req, res) => {
       unit,
       rackNumber,
       lowStockLimit,
+      image: req.file ? req.file.path : undefined, 
     });
 
     await StockHistory.create({
