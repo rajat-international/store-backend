@@ -24,6 +24,10 @@ const addFabric = async (req, res) => {
       lowStockLimit,
     } = req.body;
 
+    // composition FormData me JSON string ban ke aata hai, isliye parse karo
+    const parsedComposition =
+      typeof composition === "string" ? JSON.parse(composition) : composition;
+
     const existingFabric = await Fabric.findOne({ fabricCode });
 
     if (existingFabric) {
@@ -36,7 +40,7 @@ const addFabric = async (req, res) => {
     const fabric = await Fabric.create({
       fabricCode,
       construction,
-      composition,
+      composition: parsedComposition,
       category,
       gsm,
       width,
@@ -47,7 +51,7 @@ const addFabric = async (req, res) => {
       unit,
       rackNumber,
       lowStockLimit,
-      image: req.file ? req.file.path : undefined, 
+      image: req.file ? req.file.path : undefined,
     });
 
     await StockHistory.create({
@@ -91,7 +95,6 @@ const getAllFabrics = async (req, res) => {
 
     if (search) {
       query.$or = [
-        
         {
           fabricCode: {
             $regex: search,
@@ -131,15 +134,15 @@ const getAllFabrics = async (req, res) => {
       ];
     }
     if (category) {
-  query.category = category;
-}
+      query.category = category;
+    }
 
     if (color) {
       query.color = color;
     }
     if (category) {
-  query.category = category;
-}
+      query.category = category;
+    }
 
     if (supplier) {
       query.supplier = supplier;
@@ -219,6 +222,15 @@ const updateFabric = async (req, res) => {
       await deleteImage(fabric.image);
     }
 
+    // composition FormData me JSON string ban ke aata hai, isliye parse karo
+    if (req.body.composition && typeof req.body.composition === "string") {
+      req.body.composition = JSON.parse(req.body.composition);
+    }
+
+    // agar image field req.body me galti se (empty object/string) aa gaya ho to hata do,
+    // taaki Object.assign fabric.image ko corrupt na kare — image sirf req.file se set hoga
+    delete req.body.image;
+
     Object.assign(fabric, req.body);
 
     if (req.file) {
@@ -288,8 +300,7 @@ const exportFabrics = async (req, res) => {
 
     worksheet.mergeCells("A1:K1");
 
-    worksheet.getCell("A1").value =
-      "RAJAT INTERNATIONAL";
+    worksheet.getCell("A1").value = "RAJAT INTERNATIONAL";
 
     worksheet.getCell("A1").font = {
       bold: true,
@@ -304,8 +315,7 @@ const exportFabrics = async (req, res) => {
 
     worksheet.mergeCells("A2:K2");
 
-    worksheet.getCell("A2").value =
-      "FABRIC INVENTORY REPORT";
+    worksheet.getCell("A2").value = "FABRIC INVENTORY REPORT";
 
     worksheet.getCell("A2").font = {
       bold: true,
@@ -317,8 +327,7 @@ const exportFabrics = async (req, res) => {
     };
 
     worksheet.getCell("A3").value =
-      "Generated : " +
-      new Date().toLocaleString("en-IN");
+      "Generated : " + new Date().toLocaleString("en-IN");
 
     worksheet.addRow([]);
 
@@ -386,10 +395,7 @@ const exportFabrics = async (req, res) => {
         fabric.construction,
 
         fabric.composition
-          ?.map(
-            (item) =>
-              `${item.percentage}% ${item.material}`
-          )
+          ?.map((item) => `${item.percentage}% ${item.material}`)
           .join(", "),
 
         fabric.gsm,
@@ -434,9 +440,7 @@ const exportFabrics = async (req, res) => {
       let maxLength = 15;
 
       column.eachCell((cell) => {
-        const len = cell.value
-          ? cell.value.toString().length
-          : 10;
+        const len = cell.value ? cell.value.toString().length : 10;
 
         if (len > maxLength) {
           maxLength = len;
@@ -489,5 +493,5 @@ module.exports = {
   getFabricById,
   updateFabric,
   deleteFabric,
-    exportFabrics,
+  exportFabrics,
 };
