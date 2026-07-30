@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const connectDB = require("./config/db");   // 👈 ye add karo
 const historyRoutes = require("./routes/history.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const authRoutes = require("./routes/auth.routes");
@@ -16,6 +17,14 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Database connection failed" });
+  }
+});
 
 app.get("/", (req, res) => {
   res.json({
