@@ -28,15 +28,6 @@ const addFabric = async (req, res) => {
     const parsedComposition =
       typeof composition === "string" ? JSON.parse(composition) : composition;
 
-    const existingFabric = await Fabric.findOne({ fabricCode });
-
-    if (existingFabric) {
-      return res.status(400).json({
-        success: false,
-        message: "Fabric Code already exists",
-      });
-    }
-
     const fabric = await Fabric.create({
       fabricCode,
       construction,
