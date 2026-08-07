@@ -4,7 +4,6 @@ const fabricSchema = new mongoose.Schema({
   fabricCode: {
     type: String,
     required: true,
-    unique: true,
     trim: true,
   },
   image: {
